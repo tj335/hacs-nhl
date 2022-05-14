@@ -94,13 +94,14 @@ class NHLScoresSensor(CoordinatorEntity):
         self._losing_goalie = None
         self._losing_goalie_saves = None
         self._losing_goalie_save_pct = None
+        self._first_star = None
+        self._second_star = None
+        self._third_star = None
         self._game_status = None
         self._home_team_abbr = None
         self._home_team_id = None
         self._home_team_city = None
         self._home_team_name = None
-        self._home_team_color = None
-        self._home_team_alt_color = None
         self._home_team_logo = None
         self._home_team_goals = None
         self._home_team_colors = None
@@ -112,8 +113,6 @@ class NHLScoresSensor(CoordinatorEntity):
         self._away_team_id = None
         self._away_team_city = None
         self._away_team_name = None
-        self._away_team_color = None
-        self._away_team_alt_color = None
         self._away_team_logo = None
         self._away_team_goals = None
         self._away_team_colors = None
@@ -134,41 +133,6 @@ class NHLScoresSensor(CoordinatorEntity):
         self._last_update = None
         self._team_id = entry.data[CONF_TEAM_ID]
         self.coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
-        
-        
-        
-        #self._kickoff_in = None
-        #self._quarter = None
-        #self._clock = None
-        #self._venue = None
-        #self._location = None
-        #self._tv_network = None
-        #self._odds = None
-        #self._overunder = None
-        #self._possession = None
-        #self._last_play = None
-        #self._down_distance_text = None
-        #self._team_abbr = None
-        #self._team_id = None
-        #self._team_name = None
-        #self._team_record = None
-        #self._team_homeaway = None
-        #self._team_logo = None
-        #self._team_colors = None
-        #self._team_score = None
-        #self._team_win_probability = None
-        #self._team_timeouts = None
-        #self._opponent_abbr = None
-        #self._opponent_id = None
-        #self._opponent_name = None
-        #self._opponent_record = None
-        #self._opponent_homeaway = None
-        #self._opponent_logo = None
-        #self._opponent_colors = None
-        #self._opponent_score = None
-        #self._opponent_win_probability = None
-        #self._opponent_timeouts = None
-        #self._team_id = entry.data[CONF_TEAM_ID]
 
     @property
     def unique_id(self):
@@ -226,13 +190,14 @@ class NHLScoresSensor(CoordinatorEntity):
         attrs["losing_goalie"] = self.coordinator.data["losing_goalie"]
         attrs["losing_goalie_saves"] = self.coordinator.data["losing_goalie_saves"]
         attrs["losing_goalie_save_pct"] = self.coordinator.data["losing_goalie_save_pct"]
+        attrs["first_star"] = self.coordinator.data["first_star"]
+        attrs["second_star"] = self.coordinator.data["second_star"]
+        attrs["third_star"] = self.coordinator.data["third_star"]
         attrs["game_status"] = self.coordinator.data["game_status"]
         attrs["home_team_abbr"] = self.coordinator.data["home_team_abbr"]
         attrs["home_team_id"] = self.coordinator.data["home_team_id"]
         attrs["home_team_city"] = self.coordinator.data["home_team_city"]
         attrs["home_team_name"] = self.coordinator.data["home_team_name"]
-        attrs["home_team_color"] = self.coordinator.data["home_team_color"]
-        attrs["home_team_alt_color"] = self.coordinator.data["home_team_alt_color"]
         attrs["home_team_logo"] = self.coordinator.data["home_team_logo"]
         attrs["home_team_goals"] = self.coordinator.data["home_team_goals"]
         attrs["home_team_colors"] = self.coordinator.data["home_team_colors"]
@@ -244,8 +209,6 @@ class NHLScoresSensor(CoordinatorEntity):
         attrs["away_team_id"] = self.coordinator.data["away_team_id"]
         attrs["away_team_city"] = self.coordinator.data["away_team_city"]
         attrs["away_team_name"] = self.coordinator.data["away_team_name"]
-        attrs["away_team_color"] = self.coordinator.data["away_team_color"]
-        attrs["away_team_alt_color"] = self.coordinator.data["away_team_alt_color"]
         attrs["away_team_logo"] = self.coordinator.data["away_team_logo"]
         attrs["away_team_goals"] = self.coordinator.data["away_team_goals"]
         attrs["away_team_colors"] = self.coordinator.data["away_team_colors"]
@@ -265,41 +228,6 @@ class NHLScoresSensor(CoordinatorEntity):
         attrs["headlines"] = self.coordinator.data["headlines"]
         attrs["last_update"] = self.coordinator.data["last_update"]
       
-        
-        
-        #attrs["kickoff_in"] = self.coordinator.data["kickoff_in"]
-        #attrs["quarter"] = self.coordinator.data["quarter"]
-        #attrs["clock"] = self.coordinator.data["clock"]
-        #attrs["venue"] = self.coordinator.data["venue"]
-        #attrs["location"] = self.coordinator.data["location"]
-        #attrs["tv_network"] = self.coordinator.data["tv_network"]
-        #attrs["odds"] = self.coordinator.data["odds"]
-        #attrs["overunder"] = self.coordinator.data["overunder"]
-        #attrs["possession"] = self.coordinator.data["possession"]
-        #attrs["last_play"] = self.coordinator.data["last_play"]
-        #attrs["down_distance_text"] = self.coordinator.data["down_distance_text"]
-        #attrs["team_abbr"] = self.coordinator.data["team_abbr"]
-        #attrs["team_id"] = self.coordinator.data["team_id"]
-        #attrs["team_name"] = self.coordinator.data["team_name"]
-        #attrs["team_record"] = self.coordinator.data["team_record"]
-        #attrs["team_homeaway"] = self.coordinator.data["team_homeaway"]
-        #attrs["team_logo"] = self.coordinator.data["team_logo"]
-        #attrs["team_colors"] = self.coordinator.data["team_colors"]
-        #attrs["team_score"] = self.coordinator.data["team_score"]
-        #attrs["team_win_probability"] = self.coordinator.data["team_win_probability"]
-        #attrs["team_timeouts"] = self.coordinator.data["team_timeouts"]
-        #attrs["opponent_abbr"] = self.coordinator.data["opponent_abbr"]
-        #attrs["opponent_id"] = self.coordinator.data["opponent_id"]
-        #attrs["opponent_name"] = self.coordinator.data["opponent_name"]
-        #attrs["opponent_record"] = self.coordinator.data["opponent_record"]
-        #attrs["opponent_homeaway"] = self.coordinator.data["opponent_homeaway"]
-        #attrs["opponent_logo"] = self.coordinator.data["opponent_logo"]
-        #attrs["opponent_colors"] = self.coordinator.data["opponent_colors"]
-        #attrs["opponent_score"] = self.coordinator.data["opponent_score"]
-        #attrs["opponent_win_probability"] = self.coordinator.data["opponent_win_probability"]
-        #attrs["opponent_timeouts"] = self.coordinator.data["opponent_timeouts"]
-        #attrs["last_update"] = self.coordinator.data["last_update"]
-
         return attrs
 
     @property
