@@ -1,7 +1,9 @@
 """ NHL Team Status """
 import logging
 from datetime import timedelta
+from datetime import datetime
 import arrow
+import time
 
 import aiohttp
 from async_timeout import timeout
@@ -16,7 +18,8 @@ from homeassistant.helpers.entity_registry import (
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
-    API_ENDPOINT,
+    API_SCOREBOARD_ENDPOINT,
+    API_TEAM_ENDPOINT,
     CONF_TIMEOUT,
     CONF_TEAM_ID,
     COORDINATOR,
@@ -29,6 +32,19 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+today = datetime.today().strftime('%Y-%m-%d')
+
+def datetime_from_utc_to_local(utc_datetime):
+    now_timestamp = time.time()
+    offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
+    _LOGGER.info(offset)
+    return utc_datetime + offset
+
+_LOGGER.info(
+        "Debugging todays date and time: %s",
+        datetime.now(),
+    )
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -147,11 +163,11 @@ async def async_get_state(config) -> dict:
     values = {}
     headers = {"User-Agent": USER_AGENT, "Accept": "application/ld+json"}
     data = None
-    url = API_ENDPOINT
+    gameday_url = API_SCOREBOARD_ENDPOINT
     team_id = config[CONF_TEAM_ID]
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as r:
-            _LOGGER.debug("Getting state for %s from %s" % (team_id, url))
+        async with session.get(gameday_url, headers=headers) as r:
+            _LOGGER.debug("Getting state for %s from %s" % (team_id, gameday_url))
             if r.status == 200:
                 data = await r.json()
 
@@ -167,16 +183,19 @@ async def async_get_state(config) -> dict:
                 team_home_away = event["competitions"][0]["competitors"][team_index]["homeAway"]
                 oppo_index = abs((team_index-1))
                 
+                # state will be one of: pre, in, post
                 try:
                     values["state"] = event["status"]["type"]["state"]
                 except:
                     values["state"] = None
                 
+                # detailed_state will be one of: STATUS_SCHEDULED, STATUS_IN_PROGRESS, STATUS_FINAL
                 try:
                     values["detailed_state"] = event["status"]["type"]["name"]
                 except:
                     values["detailed_state"] = None
                 
+                # Attempt to calculate the length of the game
                 #try:
                 #    if prior_state in ['STATUS_IN_PROGRESS'] and values["state"] in ['STATUS_FINAL']:
                 #        _LOGGER.debug("Calulating game time for %s" % (team_id))
@@ -442,6 +461,29 @@ async def async_get_state(config) -> dict:
                         values["losing_goalie_saves"] = None
                         values["losing_goalie_save_pct"] = None
 
+                    if fs_index != -1:
+                        try:
+                            values["first_star"] = event["competitions"][0]["status"]["featuredAthletes"][fs_index]["athlete"]["fullName"]
+                        except:
+                            values["first_star"] = None
+                    else:
+                        values["first_star"] = None
+
+                    if ss_index != -1:
+                        try:
+                            values["second_star"] = event["competitions"][0]["status"]["featuredAthletes"][ss_index]["athlete"]["fullName"]
+                        except:
+                            values["second_star"] = None
+                    else:
+                        values["second_star"] = None
+
+                    if ts_index != -1:
+                        try:
+                            values["third_star"] = event["competitions"][0]["status"]["featuredAthletes"][ts_index]["athlete"]["fullName"]
+                        except:
+                            values["third_star"] = None
+                    else:
+                        values["third_star"] = None
                 else:
                     values["winning_goalie"] = None
                     values["winning_goalie_saves"] = None
@@ -449,7 +491,9 @@ async def async_get_state(config) -> dict:
                     values["losing_goalie"] = None
                     values["losing_goalie_saves"] = None
                     values["losing_goalie_save_pct"] = None
-
+                    values["first_star"] = None
+                    values["second_star"] = None
+                    values["third_star"] = None
 
                 try:
                     values["game_status"] = event["status"]["type"]["shortDetail"]
@@ -460,8 +504,6 @@ async def async_get_state(config) -> dict:
                 values["home_team_id"] = event["competitions"][0]["competitors"][0]["team"]["id"]
                 values["home_team_city"] = event["competitions"][0]["competitors"][0]["team"]["location"]
                 values["home_team_name"] = event["competitions"][0]["competitors"][0]["team"]["name"]
-                values["home_team_color"] = event["competitions"][0]["competitors"][0]["team"]["color"]
-                values["home_team_alt_color"] = event["competitions"][0]["competitors"][0]["team"]["alternateColor"]
                 values["home_team_logo"] = event["competitions"][0]["competitors"][0]["team"]["logo"]
                 values["home_team_goals"] = event["competitions"][0]["competitors"][0]["score"]
 
@@ -492,8 +534,6 @@ async def async_get_state(config) -> dict:
                 values["away_team_id"] = event["competitions"][0]["competitors"][1]["team"]["id"]
                 values["away_team_city"] = event["competitions"][0]["competitors"][1]["team"]["location"]
                 values["away_team_name"] = event["competitions"][0]["competitors"][1]["team"]["name"]
-                values["away_team_color"] = event["competitions"][0]["competitors"][1]["team"]["color"]
-                values["away_team_alt_color"] = event["competitions"][0]["competitors"][1]["team"]["alternateColor"]
                 values["away_team_logo"] = event["competitions"][0]["competitors"][1]["team"]["logo"]
                 values["away_team_goals"] = event["competitions"][0]["competitors"][1]["score"]
                 try:
@@ -568,107 +608,144 @@ async def async_get_state(config) -> dict:
                 except:
                     values["headlines"] = None
                     
-                #if event["status"]["type"]["state"].lower() in ['pre', 'post']: # could use status.completed == true as well
-                    # x.events[3].competitions[0].odds[1].awayTeamOdds.winPercentage
-                    # x.events[3].competitions[0].odds[1].homeTeamOdds.winPercentage
-                #else:
-                
-                
-                #    if event["competitions"][0]["competitors"][team_index]["homeAway"] == "home":
-                #        try:
-                #            values["team_win_probability"] = event["competitions"][0]["situation"]["lastPlay"]["probability"]["homeWinPercentage"]
-                #            values["opponent_win_probability"] = event["competitions"][0]["situation"]["lastPlay"]["probability"]["awayWinPercentage"]
-                #        except:
-                #            values["team_win_probability"] = None
-                #            values["opponent_win_probability"] = None
-                #    else:
-                #        try:
-                #            values["team_win_probability"] = event["competitions"][0]["situation"]["lastPlay"]["probability"]["awayWinPercentage"]
-                #            values["opponent_win_probability"] = event["competitions"][0]["situation"]["lastPlay"]["probability"]["homeWinPercentage"]
-                #        except:
-                #            values["team_win_probability"] = None
-                #            values["opponent_win_probability"] = None
-                
-                #try:
-                #    values["team_record"] = event["competitions"][0]["competitors"][team_index]["records"][0]["summary"]
-                #except:
-                #    values["team_record"] = None
-                #values["team_homeaway"] = event["competitions"][0]["competitors"][team_index]["homeAway"]
-                #values["team_logo"] = event["competitions"][0]["competitors"][team_index]["team"]["logo"]
-                #try:
-                #    values["team_colors"] = [''.join(('#',event["competitions"][0]["competitors"][team_index]["team"]["color"])), 
-                #                         ''.join(('#',event["competitions"][0]["competitors"][team_index]["team"]["alternateColor"]))]
-                #except:
-                #    if team_id == 'NFC':
-                #        values["team_colors"] = ['#013369','#013369']
-                #    if team_id == 'AFC':
-                #        values["team_colors"] = ['#D50A0A','#D50A0A']
                 values["last_update"] = arrow.now().format(arrow.FORMAT_W3C)
                 values["private_fast_refresh"] = False
         
         # Never found the team. Either off today or a post-season condition
         if not found_team:
-            _LOGGER.debug("Did not find a game for %s." % (team_id))
-            values["state"] = 'OFF'
-            values["detailed_state"] = None
-            values["last_update"] = arrow.now().format(arrow.FORMAT_W3C)
+            _LOGGER.info("Team not found on scoreboard feed.  Using team API.")
 
-            values["game_length"] = None
-            values["date"] = None
-            values["game_end_time"] = None
+            team_url = API_TEAM_ENDPOINT + team_id
+            _LOGGER.info(team_url)
+            async with aiohttp.ClientSession() as session:
+                async with session.get(team_url, headers=headers) as r:
+                    if r.status == 200:
+                        data = await r.json()
+            team_data = data["team"]
+
+            # Determine if our team is home or away.  hoome team is always index 0.
+            team_index = 0 if team_data["nextEvent"][0]["competitions"][0]["competitors"][0]["team"]["abbreviation"] == team_id else 1
+            oppo_index = abs((team_index - 1))
+            
+            # Determine our opponents team id (abbreviation) so that we can lookup their information as well
+            oppo_id = team_data["nextEvent"][0]["competitions"][0]["competitors"][oppo_index]["team"]["abbreviation"]
+            oppo_url = API_TEAM_ENDPOINT + oppo_id
+            _LOGGER.info(oppo_url)
+            async with aiohttp.ClientSession() as session:
+                async with session.get(oppo_url, headers=headers) as r:
+                    if r.status == 200:
+                        data = await r.json()
+            oppo_data = data["team"]
+
+            values["state"] = team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["state"].lower()
+#            if values["state"] in ['post']:
+#                _LOGGER.info("Game State is POST")
+#                if team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["description"] == "Postponed":
+#                    _LOGGER.info("Game is Postponed, set state")
+#                    values["state"] = "POSTPONED"
+            values["detailed_state"] = team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["name"]
+            values["date"] = team_data["nextEvent"][0]["date"]
+
             values["attendance"] = None
-            values["event_name"] = None
-            values["event_short_name"] = None
-            values["venue_name"] = None
-            values["venue_city"] = None
-            values["venue_state"] = None
-            values["venue_capacity"] = None
-            values["venue_indoor"] = None
+            values["event_name"] = team_data["nextEvent"][0]["name"]
+            values["event_short_name"] = team_data["nextEvent"][0]["shortName"]
+            values["venue_name"] = team_data["nextEvent"][0]["competitions"][0]["venue"]["fullName"]
+            values["venue_city"] = team_data["nextEvent"][0]["competitions"][0]["venue"]["address"]["city"]
+            values["venue_state"] = team_data["nextEvent"][0]["competitions"][0]["venue"]["address"]["state"]
+
+            if team_index == 0:
+                try:
+                    values["venue_capacity"] = team_data["franchise"]["venue"]["capacity"]
+                except:
+                    values["venue_capacity"] = None
+                
+                # Formatted as true/false
+                try:
+                    values["venue_indoor"] = team_data["franchise"]["venue"]["indoor"]
+                except:
+                    values["venue_indoor"] = None
+            else:
+                try:
+                    values["venue_capacity"] = oppo_data["franchise"]["venue"]["capacity"]
+                except:
+                    values["venue_capacity"] = None
+                
+                # Formatted as true/false
+                try:
+                    values["venue_indoor"] = oppo_data["franchise"]["venue"]["indoor"]
+                except:
+                    values["venue_indoor"] = None
+                
             values["period"] = None
             values["period_description"] = None
+
+            # featuredAthletes could be: winningGoalie, losingGoalie, firstStar, secondStar, thirdStar
             values["winning_goalie"] = None
             values["winning_goalie_saves"] = None
             values["winning_goalie_save_pct"] = None
             values["losing_goalie"] = None
             values["losing_goalie_saves"] = None
             values["losing_goalie_save_pct"] = None
-            values["game_status"] = None
-            values["home_team_abbr"] = None
-            values["home_team_id"] = None
-            values["home_team_city"] = None
-            values["home_team_name"] = None
-            values["home_team_color"] = None
-            values["home_team_alt_color"] = None
-            values["home_team_logo"] = None
+            values["first_star"] = None
+            values["second_star"] = None
+            values["third_star"] = None
+            values["game_status"] = None          
+            values["home_team_abbr"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][0]["team"]["abbreviation"]
+            values["home_team_id"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][0]["team"]["id"]
+            values["home_team_city"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][0]["team"]["location"]
+            values["home_team_name"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][0]["team"]["shortDisplayName"]
+
+            if team_index == 0:
+                values["home_team_colors"] = [''.join(('#',team_data["color"])), 
+                        ''.join(('#',team_data["alternateColor"]))]
+                values["home_team_record"] = team_data["record"]["items"][0]["summary"]
+            else:
+                values["home_team_colors"] = [''.join(('#',oppo_data["color"])), 
+                        ''.join(('#',oppo_data["alternateColor"]))]
+                values["home_team_record"] = oppo_data["record"]["items"][0]["summary"]
+
+            values["home_team_logo"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][0]["team"]["logos"][2]["href"]
             values["home_team_goals"] = None
-            values["home_team_colors"] = ['#013369','#013369']
             values["home_team_ls_1"] = None
             values["home_team_ls_2"] = None
-            values["home_team_ls_3"] = None
-            values["home_team_record"] = None
-            values["away_team_abbr"] = None
-            values["away_team_id"] = None
-            values["away_team_city"] = None
-            values["away_team_name"] = None
-            values["away_team_color"] = None
-            values["away_team_alt_color"] = None
-            values["away_team_logo"] = None
+            values["home_team_ls_3"] = None                
+            values["away_team_abbr"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][1]["team"]["abbreviation"]
+            values["away_team_id"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][1]["team"]["id"]
+            values["away_team_city"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][1]["team"]["location"]
+            values["away_team_name"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][1]["team"]["shortDisplayName"]
+
+            if team_index == 1:
+                values["away_team_colors"] = [''.join(('#',team_data["color"])), 
+                        ''.join(('#',team_data["alternateColor"]))]
+                values["away_team_record"] = team_data["record"]["items"][0]["summary"]
+            else:
+                values["away_team_colors"] = [''.join(('#',oppo_data["color"])), 
+                        ''.join(('#',oppo_data["alternateColor"]))]
+                values["away_team_record"] = oppo_data["record"]["items"][0]["summary"]
+
+            values["away_team_logo"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][1]["team"]["logos"][2]["href"]
             values["away_team_goals"] = None
-            values["away_team_colors"] = ['#D50A0A','#D50A0A']
             values["away_team_ls_1"] = None
             values["away_team_ls_2"] = None
             values["away_team_ls_3"] = None
-            values["away_team_record"] = None
-            values["puck_drop_in"] = None
-            values["tv_network"] = None
+            values["puck_drop_in"] = arrow.get(team_data["nextEvent"][0]["date"]).humanize()       
+            values["tv_network"] = team_data["nextEvent"][0]["competitions"][0]["broadcasts"][0]["media"]["shortName"]
             values["last_play"] = None
-            values["home_team_starting_goalie"] = None
-            values["away_team_starting_goalie"] = None
+                
+            # Starting Goalie
+            values["home_team_starting_goalie"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][0]["probables"][0]["athlete"]["displayName"]
+            values["away_team_starting_goalie"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][1]["probables"][0]["athlete"]["displayName"]
+
             values["odds"] = None
             values["overunder"] = None
             values["home_team_odds_win_pct"] = None
             values["away_team_odds_win_pct"] = None
-            values["headlines"] = None
+            values["headlines"] = team_data["nextEvent"][0]["competitions"][0]["notes"][0]["headline"]
+            
+            values["last_update"] = arrow.now().format(arrow.FORMAT_W3C)
+            values["game_length"] = None
+            values["game_end_time"] = None
+
             
 
         if values["state"] == 'pre' and ((arrow.get(values["date"])-arrow.now()).total_seconds() < 1200):
@@ -713,13 +790,14 @@ async def async_clear_states(config) -> dict:
         "losing_goalie": None,
         "losing_goalie_saves": None,
         "losing_goalie_save_pct": None,
+        "first_star": None,
+        "second_star": None,
+        "third_star": None,
         "game_status": None,
         "home_team_abbr": None,
         "home_team_id": None,
         "home_team_city": None,
         "home_team_name": None,
-        "home_team_color": None,
-        "home_team_alt_color": None,
         "home_team_logo": None,
         "home_team_goals": None,
         "home_team_colors": None,
@@ -731,8 +809,6 @@ async def async_clear_states(config) -> dict:
         "away_team_id": None,
         "away_team_city": None,
         "away_team_name": None,
-        "away_team_color": None,
-        "away_team_alt_color": None,
         "away_team_logo": None,
         "away_team_goals": None,
         "away_team_colors": None,
