@@ -1,9 +1,9 @@
 {
     "domain": "nhl",
     "name": "NHL",
-    "version": "0.1",
-    "documentation": "https://github.com/zacs/ha_nfl",
-    "issue_tracker": "https://github.com/zacs/ha_nfl/issues",
+    "version": "0.2",
+    "documentation": "https://github.com/tj335/hacs_nhl",
+    "issue_tracker": "https://github.com/tj335/hacs_nhl/issues",
     "dependencies": [],
     "codeowners": ["@tj335"],
     "config_flow": true,
