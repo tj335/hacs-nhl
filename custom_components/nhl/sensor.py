@@ -108,6 +108,7 @@ class NHLScoresSensor(CoordinatorEntity):
         self._home_team_ls_1 = None
         self._home_team_ls_2 = None
         self._home_team_ls_3 = None
+        self._home_team_ls_ot = None
         self._home_team_record = None
         self._away_team_abbr = None
         self._away_team_id = None
@@ -119,6 +120,7 @@ class NHLScoresSensor(CoordinatorEntity):
         self._away_team_ls_1 = None
         self._away_team_ls_2 = None
         self._away_team_ls_3 = None
+        self._away_team_ls_ot = None
         self._away_team_record = None
         self._puck_drop_in = None
         self._tv_network = None
@@ -204,6 +206,7 @@ class NHLScoresSensor(CoordinatorEntity):
         attrs["home_team_ls_1"] = self.coordinator.data["home_team_ls_1"]
         attrs["home_team_ls_2"] = self.coordinator.data["home_team_ls_2"]
         attrs["home_team_ls_3"] = self.coordinator.data["home_team_ls_3"]
+        attrs["home_team_ls_ot"] = self.coordinator.data["home_team_ls_ot"]
         attrs["home_team_record"] = self.coordinator.data["home_team_record"]
         attrs["away_team_abbr"] = self.coordinator.data["away_team_abbr"]
         attrs["away_team_id"] = self.coordinator.data["away_team_id"]
@@ -215,6 +218,7 @@ class NHLScoresSensor(CoordinatorEntity):
         attrs["away_team_ls_1"] = self.coordinator.data["away_team_ls_1"]
         attrs["away_team_ls_2"] = self.coordinator.data["away_team_ls_2"]
         attrs["away_team_ls_3"] = self.coordinator.data["away_team_ls_3"]
+        attrs["away_team_ls_ot"] = self.coordinator.data["away_team_ls_ot"]
         attrs["away_team_record"] = self.coordinator.data["away_team_record"]
         attrs["puck_drop_in"] = self.coordinator.data["puck_drop_in"]
         attrs["tv_network"] = self.coordinator.data["tv_network"]
