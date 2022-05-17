@@ -528,6 +528,11 @@ async def async_get_state(config) -> dict:
                 except:
                     values["home_team_ls_3"] = None
                 
+                try:
+                    values["home_team_ls_ot"] = event["competitions"][0]["competitors"][0]["linescores"][3]["value"]
+                except:
+                    values["home_team_ls_ot"] = None
+                
                 values["home_team_record"] = event["competitions"][0]["competitors"][0]["records"][0]["summary"]
                 
                 values["away_team_abbr"] = event["competitions"][0]["competitors"][1]["team"]["abbreviation"]
@@ -557,6 +562,11 @@ async def async_get_state(config) -> dict:
                     values["away_team_ls_3"] = event["competitions"][0]["competitors"][1]["linescores"][2]["value"]
                 except:
                     values["away_team_ls_3"] = None
+
+                try:
+                    values["away_team_ls_ot"] = event["competitions"][0]["competitors"][1]["linescores"][3]["value"]
+                except:
+                    values["away_team_ls_ot"] = None
                 
                 values["away_team_record"] = event["competitions"][0]["competitors"][1]["records"][0]["summary"]
                 
@@ -709,6 +719,7 @@ async def async_get_state(config) -> dict:
             values["home_team_ls_1"] = None
             values["home_team_ls_2"] = None
             values["home_team_ls_3"] = None                
+            values["home_team_ls_ot"] = None
             values["away_team_abbr"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][1]["team"]["abbreviation"]
             values["away_team_id"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][1]["team"]["id"]
             values["away_team_city"] = team_data["nextEvent"][0]["competitions"][0]["competitors"][1]["team"]["location"]
@@ -728,6 +739,7 @@ async def async_get_state(config) -> dict:
             values["away_team_ls_1"] = None
             values["away_team_ls_2"] = None
             values["away_team_ls_3"] = None
+            values["away_team_ls_ot"] = None
             values["puck_drop_in"] = arrow.get(team_data["nextEvent"][0]["date"]).humanize()       
             values["tv_network"] = team_data["nextEvent"][0]["competitions"][0]["broadcasts"][0]["media"]["shortName"]
             values["last_play"] = None
@@ -804,6 +816,7 @@ async def async_clear_states(config) -> dict:
         "home_team_ls_1": None,
         "home_team_ls_2": None,
         "home_team_ls_3": None,
+        "home_team_ls_ot": None,
         "home_team_record": None,
         "away_team_abbr": None,
         "away_team_id": None,
@@ -815,6 +828,7 @@ async def async_clear_states(config) -> dict:
         "away_team_ls_1": None,
         "away_team_ls_2": None,
         "away_team_ls_3": None,
+        "away_team_ls_ot": None,
         "away_team_record": None,
         "puck_drop_in": None,
         "tv_network": None,
