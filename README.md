@@ -7,47 +7,79 @@ The integration is a shameless fork of the excellent [NFL](https://github.com/za
 ## Sensor Data
 
 ### State
-The sensor is pretty simple: the main state is `PRE`, `IN`, `POST`, `BYE` or `NOT_FOUND`, but there are attributes for pretty much all aspects of the game, when available. State definitions are as you'd expect:
-- `PRE`: The game is in pre-game state. This happens on the first day of the game week, which seems to be Tuesday evenings around midnight Eastern time (once all the games through the Monday Night Football game are wrapped up). 
+The sensor is pretty simple: the main state is `PRE`, `IN`, `POST`, or `NOT_FOUND`, but there are attributes for pretty much all aspects of the game, when available. State definitions are as you'd expect:
+- `PRE`: The game is in pre-game state. 
 - `IN`: The game is in progress.
-- `POST`: The game has completed. 
-- `BYE`: Your given team has a bye week this week. Note that attributes available are limited in this case (only abreviation, name, logo, and last updated time will be available). 
-- `NOT_FOUND`: There is no game found for your team, nor is there a bye. This should only happen at the end of the season, and once your team is eliminated from postseason play. 
+- `POST`: The game has completed. It usually remains in this state until about 10:00 AM ET the following day when ESPN updates their scoreboard.
+- `NOT_FOUND`: There is no game found for your team. This should only happen at the end of the season, and once your team is eliminated from postseason play. 
 
 ### Attributes
 The attributes available will change based on the sensor's state, a small number are always available (team abbreviation, team name, and logo), but otherwise the attributes only populate when in the current state. The table below lists which attributes are available in which states. 
 
 | Name | Value | Relevant States |
 | --- | --- | --- |
-| `date` | Date and time of the game | `PRE` `IN` `POST` |
-| `kickoff_in` | Human-readable string for how far away the game is (eg. "in 30 minutes" or "tomorrow") |  `PRE` `IN` `POST` |
-| `venue` | The name of the stadium where the game is being played (eg. "Arrowhead Stadium") | `PRE` `IN` `POST` |
-| `location` | The city and state where the game is being played (eg. "Pittsburgh, PA") | `PRE` `IN` `POST` |
+| `detailed_state` | Containts a more detailed status of the game such as STATUS_SCHEDULED. | `PRE` `IN` `POST` |
+| `game_length` | Length of the game | `POST` |
+| `date` | Date and time that the game starts (or started) | `PRE` `IN` `POST` |
+| `game_end_time` | Date and time that the game ended | `POST` |
+| `attendance` | Number of fans in attendance | `POST` |
+| `event_name` | Description of the event (eg. "New York Rangers at Carolina Hurricanes") | `PRE` `IN` `POST` |
+| `event_short_name` | Shorter description of the event (eg. "NYR @ CAR") | `PRE` `IN` `POST` |
+| `event_type` | Code indicating the type of event (eg. "STD", "RD16" or "QTR") | `PRE` `IN` `POST` |
+| `game_notes` | Notes about the game (eg. "East 1st Round - Game 7") | `PRE` `IN` `POST` |
+| `series_summary` | Current status of the series (eg. "Series Tied 3-3") | `PRE` `IN` `POST` |
+| `venue_name` | The name of the stadium where the game is being played (eg. "PNC Arena") | `PRE` `IN` `POST` |
+| `venue_city` | The city where the stadium is located (eg. "Raleigh") | `PRE` `IN` `POST` |
+| `venue_state` | The state where the stadium is located (eg. "NC") | `PRE` `IN` `POST` |
+| `venue_capacity` | The capacity of the venue (eg. "18,680") | `PRE` `IN` `POST` |
+| `venue_indoor` | An indicator if the venue is indoors (true) or not (false)  | `PRE` `IN` `POST` |
+| `period` | The current period of the game formatted as an integer (eg. "3") | `IN` |
+| `period_description` | The current period of the game (eg. "13:33 - 3rd") | `IN` |
+| `winning_goalie` | Name of the winning goalie | `POST` |
+| `winning_goalie_saves` | An integer representing the number of saves for the winning goalie | `POST` |
+| `winning_goalie_save_pct` | A float representing the save percentage for the winning goalie | `POST` |
+| `losing_goalie` | Name of the losting goalie | `POST` |
+| `losing_goalie_saves` | An integer representing the number of saves for the winning goalie | `POST` |
+| `losing_goalie_save_pct` | A float representing the save percentage for the winning goalie | `POST` |
+| `first_star` | Name of the game's 1st star | `POST` |
+| `second_star` | Name of the game's 2nd star | `POST` |
+| `third_star` | Name of the game's 3rd star | `POST` |
+| `game_status` | Status of the current game | `IN` `POST` |
+| `home_team_abbr` | The abbreviation of the home team (ie. `CAR` for the Carolina Hurricanes). | `PRE` `IN` `POST` |
+| `home_team_id` | A numeric ID for the home team. | `PRE` `IN` `POST` |
+| `home_team_city` | The home team's city (eg. "Carolina"). Note this does not include the team name. | `PRE` `IN` `POST` |
+| `home_team_name` | The home team's name (eg. "Hurricanes"). Note this does not include the city name. | `PRE` `IN` `POST` |
+| `home_team_logo` | A URL for a 500px wide PNG logo for the home team. | `PRE` `IN` `POST` |
+| `home_team_goals` | The home team's score. An integer. | `IN` `POST` |
+| `home_team_colors` | An array with two hex colors. The first is the home team's primary color, and the second is their secondary color. | `PRE` `IN` `POST` |
+| `home_team_ls_1` | The home team's line score for the 1st period. An integer. | `IN` `POST` |
+| `home_team_ls_2` | The home team's line score for the 2nd period. An integer. | `IN` `POST` |
+| `home_team_ls_3` | The home team's line score for the 3rd period. An integer. | `IN` `POST` |
+| `home_team_ls_ot` | The home team's line score for the OT period. An integer. | `IN` `POST` |
+| `home_team_record` | The home team's current record (eg. "52-24-6"). | `PRE` `IN` `POST` |
+| `away_team_abbr` | The abbreviation of the away team (ie. `NYR` for the New York Rangers). | `PRE` `IN` `POST` |
+| `away_team_id` | A numeric ID for the away team. | `PRE` `IN` `POST` |
+| `away_team_city` | The away team's city (eg. "New York"). Note this does not include the team name. | `PRE` `IN` `POST` |
+| `away_team_name` | The away team's name (eg. "Rangers"). Note this does not include the city name. | `PRE` `IN` `POST` |
+| `away_team_logo` | A URL for a 500px wide PNG logo for the away team. | `PRE` `IN` `POST` |
+| `away_team_goals` | The away team's score. An integer. | `IN` `POST` |
+| `away_team_colors` | An array with two hex colors. The first is the away team's primary color, and the second is their secondary color. | `PRE` `IN` `POST` |
+| `away_team_ls_1` | The away team's line score for the 1st period. An integer. | `IN` `POST` |
+| `away_team_ls_2` | The away team's line score for the 2nd period. An integer. | `IN` `POST` |
+| `away_team_ls_3` | The away team's line score for the 3rd period. An integer. | `IN` `POST` |
+| `away_team_ls_ot` | The away team's line score for the OT period. An integer. | `IN` `POST` |
+| `away_team_record` | The away team's current record (eg. "54-20-8"). | `PRE` `IN` `POST` |
+| `puck_drop_in` | Human-readable string for how far away the game is (eg. "in 30 minutes" or "tomorrow") |  `PRE` `IN` `POST` |
 | `tv_network` | The TV network where you can watch the game (eg. "NBC" or "NFL"). Note that if there is a national feed, it will be listed here, otherwise the local affiliate will be listed. | `PRE` `IN` `POST` |
+| `last_play` | Sentence describing the most recent play. Note this can be null between periods. | `IN` |
+| `home_team_starting_goalie` | The probable starting goalie for the home team | `PRE` `IN` |
+| `away_team_starting_goalie` | The probable starting goalie for the home team | `PRE` `IN` |
 | `odds` | The betting odds for the game (eg. "PIT -5.0") | `PRE` |
 | `overunder` | The over/under betting line for the total points scored in the game (eg. "42.5"). | `PRE` |
-| `last_play` | Sentence describing the most recent play, usually including the participants from both offense and defense, and the resulting yards. Note this can be null on posession changes or in between quarters. | `IN` |
-| `team_abbr` | The abbreviation for your team (ie. `SEA` for the Seahawks). | `PRE` `IN` `POST` `BYE` |
-| `team_id` | A numeric ID for your team, used to match `possession` above. | `PRE` `IN` `POST` |
-| `team_name` | Your team's name (eg. "Seahawks"). Note this does not include the city name. | `PRE` `IN` `POST` `BYE` |
-| `team_record` | Your team's current record (eg. "2-3"). | `PRE` `IN` `POST` |
-| `team_homeaway` | Your team's home/away status. Either `home` or `away`. | `PRE` `IN` `POST` |
-| `team_logo` | A URL for a 500px wide PNG logo for the team. | `PRE` `IN` `POST` `BYE` |
-| `team_colors` | An array with two hex colors. The first is your team's primary color, and the second is their secondary color. Unless you're the Browns, in which case they are the same. | `PRE` `IN` `POST` |
-| `team_score` | Your team's score. An integer. | `IN` `POST` |
-| `team_win_probability` | The real-time chance your team has to win, according to ESPN. A percentage, but presented as a float. Note that this value can become null in between posession changes. | `IN` |
-| `team_timeouts` | The number of remaining timeouts your team has. | `PRE` `IN` `POST` |
-| `opponent_abbr` | The abbreviation for your opponent (ie. `SEA` for the Seahawks). | `PRE` `IN` `POST` `BYE` |
-| `opponent_id` | A numeric ID for your opponent, used to match `possession` above. | `PRE` `IN` `POST` |
-| `opponent_name` | Your opponent's name (eg. "Seahawks"). Note this does not include the city name. | `PRE` `IN` `POST` `BYE` |
-| `opponent_record` | Your opponent's current record (eg. "2-3"). | `PRE` `IN` `POST` |
-| `opponent_homeaway` | Your opponent's home/away status. Either `home` or `away`. | `PRE` `IN` `POST` |
-| `opponent_logo` | A URL for a 500px wide PNG logo for the opponent. | `PRE` `IN` `POST` `BYE` |
-| `opponent_colors` | An array with two hex colors. The first is your opponent's primary color, and the second is their secondary color. | `PRE` `IN` `POST` |
-| `opponent_score` | Your opponent's score. An integer. | `IN` `POST` |
-| `opponent_win_probability` | The real-time chance your opponent has to win, according to ESPN. A percentage, but presented as a float. Note that this value can become null in between posession changes. | `IN` |
-| `opponent_timeouts` | The number of remaining timeouts your opponent has. | `PRE` `IN` `POST` |
-| `last_update` | A timestamp for the last time data was fetched for the game. If you watch this in real-time, you should notice it updating every 10 minutes, except for during the game (and for the ~20 minutes pre-game) when it updates every 5 seconds. | `PRE` `IN` `POST` `BYE` |
+| `home_team_odds_win_pct` | The pre-game chance the home team has to win, according to ESPN.  A percentage, but presented as a float. | `IN` |
+| `away_team_odds_win_pct` | The pre-game chance the away team has to win, according to ESPN.  A percentage, but presented as a float. | `IN` |
+| `headlines` | A one sentence headline provided by ESPN. | `PRE` `IN` `POST` |
+| `last_update` | A timestamp for the last time data was fetched for the game. If you watch this in real-time, you should notice it updating every 10 minutes, except for during the game (and for the ~20 minutes pre-game) when it updates every 5 seconds. | `PRE` `IN` `POST` |
 
 ## Installation
 
