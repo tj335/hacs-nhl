@@ -983,15 +983,34 @@ async def async_get_state(config) -> dict:
                 _LOGGER.debug("Next event for %s is 2 or more days ago, so this is likely a post-season scenario.", team_id) 
                 values["state"] = 'no_game'
                 values["detailed_state"] = 'STATUS_NO_GAME'
+                values["date"] = None
                 values["event_name"] = None
                 values["event_short_name"] = None
                 values["event_type"] = None
                 values["game_notes"] = None
+                values["venue_name"] = None
+                values["venue_city"] = None
+                values["venue_state"] = None
+                values["venue_capacity"] = None
+                values["venue_indoor"] = None
                 values["home_team_abbr"] = None
-                values["home_team_id"] = None
-                values["home_team_city"] = None
-                values["home_team_name"] = None
-                values["home_team_record"] = None
+                if values["home_team_abbr"] != team_id:
+                    values["home_team_abbr"] = values["away_team_abbr"]
+                    values["home_team_id"] = values["away_team_id"]
+                    values["home_team_city"] = values["away_team_city"]
+                    values["home_team_name"] = values["away_team_name"]
+                    values["home_team_logo"] = values["away_team_logo"]
+                    values["home_team_colors"] = values["away_team_colors"]
+                    values["home_team_record"] = values["away_team_record"]
+                
+                values["away_team_abbr"] = None
+                values["away_team_id"] = None
+                values["away_team_city"] = None
+                values["away_team_name"] = None
+                values["away_team_logo"] = None
+                values["away_team_colors"] = None
+                values["away_team_record"] = None
+                
                 values["tv_network"] = None
                 values["headlines"] = None
 
