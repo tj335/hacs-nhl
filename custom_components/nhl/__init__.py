@@ -708,18 +708,30 @@ async def async_get_state(config) -> dict:
             team_data = data["team"]
 
             # Determine if our team is home or away.  hoome team is always index 0.
-            team_index = 0 if team_data["nextEvent"][0]["competitions"][0]["competitors"][0]["team"]["abbreviation"] == team_id else 1
-            oppo_index = abs((team_index - 1))
+            try:
+                team_index = 0 if team_data["nextEvent"][0]["competitions"][0]["competitors"][0]["team"]["abbreviation"] == team_id else 1
+            except:
+                team_index = -1
+            
+            if team_index == -1:
+                oppo_index = -1
+            else:
+                oppo_index = abs((team_index - 1))
             
             # Determine our opponents team id (abbreviation) so that we can lookup their information as well
-            oppo_id = team_data["nextEvent"][0]["competitions"][0]["competitors"][oppo_index]["team"]["abbreviation"]
-            oppo_url = API_TEAM_ENDPOINT + oppo_id
-            _LOGGER.info(oppo_url)
-            async with aiohttp.ClientSession() as session:
-                async with session.get(oppo_url, headers=headers) as r:
-                    if r.status == 200:
-                        data = await r.json()
-            oppo_data = data["team"]
+            if oppo_index == -1:
+                oppo_id = None
+                oppo_url = None
+                oppo_data = None
+            else:
+                oppo_id = team_data["nextEvent"][0]["competitions"][0]["competitors"][oppo_index]["team"]["abbreviation"]
+                oppo_url = API_TEAM_ENDPOINT + oppo_id
+                _LOGGER.info(oppo_url)
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(oppo_url, headers=headers) as r:
+                        if r.status == 200:
+                            data = await r.json()
+                oppo_data = data["team"]
 
             try:
                 values["state"] = team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["state"].lower()
@@ -967,7 +979,21 @@ async def async_get_state(config) -> dict:
             values["game_length"] = None
             values["game_end_time"] = None
 
-            
+            if ((arrow.get(values["date"])-arrow.now()).total_seconds() < 172800):
+                _LOGGER.debug("Next event for %s is 2 or more days ago, so this is likely a post-season scenario.", team_id) 
+                values["state"] = 'no_game'
+                values["detailed_state"] = 'STATUS_NO_GAME'
+                values["event_name"] = None
+                values["event_short_name"] = None
+                values["event_type"] = None
+                values["game_notes"] = None
+                values["home_team_abbr"] = None
+                values["home_team_id"] = None
+                values["home_team_city"] = None
+                values["home_team_name"] = None
+                values["home_team_record"] = None
+                values["tv_network"] = None
+                values["headlines"] = None
 
         if values["state"] == 'pre' and ((arrow.get(values["date"])-arrow.now()).total_seconds() < 1200):
             _LOGGER.debug("Event for %s is within 20 minutes, setting refresh rate to 5 seconds." % (team_id))
