@@ -183,9 +183,8 @@ async def async_get_state(config) -> dict:
                 team_home_away = event["competitions"][0]["competitors"][team_index]["homeAway"]
                 oppo_index = abs((team_index-1))
                 
-                # state will be one of: pre, in, post
                 try:
-                    values["state"] = event["status"]["type"]["state"]
+                    values["state"] = event["status"]["type"]["name"]
                 except:
                     values["state"] = None
                 
@@ -691,6 +690,24 @@ async def async_get_state(config) -> dict:
                     values["headlines"] = event["competitions"][0]["headlines"][0]["shortLinkText"]
                 except:
                     values["headlines"] = None
+
+                try:
+                    if values["state"] in ['STATUS_FINAL']:
+                        if values["home_team_abbr"] == team_id:
+                            if values["home_team_goals"] > values["away_team_goals"]:
+                                values["win_or_loss"] = "win"
+                            else:
+                                values["win_or_loss"] = "loss"
+                        else:
+                            if values["home_team_goals"] > values["away_team_goals"]:
+                                values["win_or_loss"] = "loss"
+                            else:
+                                values["win_or_loss"] = "win"
+                    else:
+                        values["win_or_loss"] = None
+                except:
+                    values["win_or_loss"] = None
+
                     
                 values["last_update"] = arrow.now().format(arrow.FORMAT_W3C)
                 values["private_fast_refresh"] = False
@@ -734,7 +751,7 @@ async def async_get_state(config) -> dict:
                 oppo_data = data["team"]
 
             try:
-                values["state"] = team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["state"].lower()
+                values["state"] = team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["name"]
             except:
                 values["state"] = None
                 
@@ -974,6 +991,8 @@ async def async_get_state(config) -> dict:
                 values["headlines"] = team_data["nextEvent"][0]["competitions"][0]["notes"][0]["headline"]
             except:
                 values["headlines"] = None
+
+            values["win_or_loss"] = None
             
             values["last_update"] = arrow.now().format(arrow.FORMAT_W3C)
             values["game_length"] = None
@@ -1013,6 +1032,7 @@ async def async_get_state(config) -> dict:
                 
                 values["tv_network"] = None
                 values["headlines"] = None
+                values["win_or_loss"] = None
 
         if values["state"] == 'pre' and ((arrow.get(values["date"])-arrow.now()).total_seconds() < 1200):
             _LOGGER.debug("Event for %s is within 20 minutes, setting refresh rate to 5 seconds." % (team_id))
