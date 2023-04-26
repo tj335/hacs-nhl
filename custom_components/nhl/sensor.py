@@ -135,6 +135,7 @@ class NHLScoresSensor(CoordinatorEntity):
         self._home_team_odds_win_pct = None
         self._away_team_odds_win_pct = None
         self._headlines = None
+        self._win_or_loss = None
         self._last_update = None
         self._team_id = entry.data[CONF_TEAM_ID]
         self.coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
@@ -236,6 +237,7 @@ class NHLScoresSensor(CoordinatorEntity):
         attrs["home_team_odds_win_pct"] = self.coordinator.data["home_team_odds_win_pct"]
         attrs["away_team_odds_win_pct"] = self.coordinator.data["away_team_odds_win_pct"]
         attrs["headlines"] = self.coordinator.data["headlines"]
+        attrs["win_or_loss"] = self.coordinator.data["win_or_loss"]
         attrs["last_update"] = self.coordinator.data["last_update"]
       
         return attrs
