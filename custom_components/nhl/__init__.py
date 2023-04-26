@@ -1000,7 +1000,7 @@ async def async_get_state(config) -> dict:
 
             if ((arrow.get(values["date"])-arrow.now()).total_seconds() < 172800):
                 _LOGGER.debug("Next event for %s is 2 or more days ago, so this is likely a post-season scenario.", team_id) 
-                values["state"] = 'no_game'
+                values["state"] = 'STATUS_NO_GAME'
                 values["detailed_state"] = 'STATUS_NO_GAME'
                 values["date"] = None
                 values["event_name"] = None
@@ -1034,13 +1034,13 @@ async def async_get_state(config) -> dict:
                 values["headlines"] = None
                 values["win_or_loss"] = None
 
-        if values["state"] == 'pre' and ((arrow.get(values["date"])-arrow.now()).total_seconds() < 1200):
+        if values["state"] == 'STATUS_SCHEDULED' and ((arrow.get(values["date"])-arrow.now()).total_seconds() < 1200):
             _LOGGER.debug("Event for %s is within 20 minutes, setting refresh rate to 5 seconds." % (team_id))
             values["private_fast_refresh"] = True
-        elif values["state"] == 'in':
+        elif values["state"] == 'STATUS_IN_PROGRESS':
             _LOGGER.debug("Event for %s is in progress, setting refresh rate to 5 seconds." % (team_id))
             values["private_fast_refresh"] = True
-        elif values["state"] in ['post', 'off']: 
+        elif values["state"] in ['STATUS_FINAL', 'OFF']: 
             _LOGGER.debug("Event for %s is over, setting refresh back to 10 minutes." % (team_id))
             values["private_fast_refresh"] = False
         else:
@@ -1117,6 +1117,7 @@ async def async_clear_states(config) -> dict:
         "home_team_odds_win_pct": None,
         "away_team_odds_win_pct": None,
         "headlines": None,
+        "win_or_loss": None,
         "last_update": None,
         "team_id": None,
         "private_fast_refresh": False
