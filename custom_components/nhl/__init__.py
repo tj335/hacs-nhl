@@ -183,8 +183,9 @@ async def async_get_state(config) -> dict:
                 team_home_away = event["competitions"][0]["competitors"][team_index]["homeAway"]
                 oppo_index = abs((team_index-1))
                 
+                # state will be one of: pre, in, post
                 try:
-                    values["state"] = event["status"]["type"]["name"]
+                    values["state"] = event["status"]["type"]["state"]
                 except:
                     values["state"] = None
                 
@@ -287,7 +288,7 @@ async def async_get_state(config) -> dict:
 
                 # featuredAthletes could be: winningGoalie, losingGoalie, firstStar, secondStar, thirdStar
 
-                if values["state"] in ['STATUS_FINAL']:
+                if values["state"] in ['post']:
                     try:
                         featuredAthlete_0_Type = event["competitions"][0]["status"]["featuredAthletes"][0]["name"]
                     except:
@@ -685,21 +686,16 @@ async def async_get_state(config) -> dict:
                     values["away_team_odds_win_pct"] = event["competitions"][0]["odds"][1]["awayTeamOdds"]["winPercentage"]
                 except:
                     values["away_team_odds_win_pct"] = None
-                
-                try:
-                    values["headlines"] = event["competitions"][0]["headlines"][0]["shortLinkText"]
-                except:
-                    values["headlines"] = None
 
                 try:
-                    if values["state"] in ['STATUS_FINAL']:
+                    if values["state"] in ['post']:
                         if values["home_team_abbr"] == team_id:
-                            if values["home_team_goals"] > values["away_team_goals"]:
+                            if values["home_team_runs"] > values["away_team_runs"]:
                                 values["win_or_loss"] = "win"
                             else:
                                 values["win_or_loss"] = "loss"
                         else:
-                            if values["home_team_goals"] > values["away_team_goals"]:
+                            if values["home_team_runs"] > values["away_team_runs"]:
                                 values["win_or_loss"] = "loss"
                             else:
                                 values["win_or_loss"] = "win"
@@ -707,7 +703,11 @@ async def async_get_state(config) -> dict:
                         values["win_or_loss"] = None
                 except:
                     values["win_or_loss"] = None
-
+               
+                try:
+                    values["headlines"] = event["competitions"][0]["headlines"][0]["shortLinkText"]
+                except:
+                    values["headlines"] = None
                     
                 values["last_update"] = arrow.now().format(arrow.FORMAT_W3C)
                 values["private_fast_refresh"] = False
@@ -751,15 +751,15 @@ async def async_get_state(config) -> dict:
                 oppo_data = data["team"]
 
             try:
-                values["state"] = team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["name"]
+                values["state"] = team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["state"].lower()
             except:
                 values["state"] = None
                 
-#            if values["state"] in ['STATUS_FINAL']:
-#                _LOGGER.info("Game State is STATUS_FINAL")
+#            if values["state"] in ['post']:
+#                _LOGGER.info("Game State is POST")
 #                if team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["description"] == "Postponed":
 #                    _LOGGER.info("Game is Postponed, set state")
-#                    values["state"] = "STATUS_POSTPONED"
+#                    values["state"] = "POSTPONED"
             try:
                 values["detailed_state"] = team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["name"]
             except:
@@ -769,8 +769,6 @@ async def async_get_state(config) -> dict:
                 values["date"] = team_data["nextEvent"][0]["date"]
             except:
                 values["date"] = None
-
-            values["last_update"] = arrow.now().format(arrow.FORMAT_W3C)
 
             values["attendance"] = None
             
@@ -989,60 +987,59 @@ async def async_get_state(config) -> dict:
             values["home_team_odds_win_pct"] = None
             values["away_team_odds_win_pct"] = None
             
+            values["win_or_loss"] = None
+
             try:
                 values["headlines"] = team_data["nextEvent"][0]["competitions"][0]["notes"][0]["headline"]
             except:
                 values["headlines"] = None
-
-            values["win_or_loss"] = None
             
             values["last_update"] = arrow.now().format(arrow.FORMAT_W3C)
             values["game_length"] = None
             values["game_end_time"] = None
 
-            if ((arrow.get(values["date"])-arrow.now()).total_seconds() < 172800):
-                _LOGGER.debug("Next event for %s is 2 or more days ago, so this is likely a post-season scenario.", team_id) 
-                values["state"] = 'STATUS_NO_GAME'
-                values["detailed_state"] = 'STATUS_NO_GAME'
-                values["date"] = None
-                values["event_name"] = None
-                values["event_short_name"] = None
-                values["event_type"] = None
-                values["game_notes"] = None
-                values["venue_name"] = None
-                values["venue_city"] = None
-                values["venue_state"] = None
-                values["venue_capacity"] = None
-                values["venue_indoor"] = None
-                values["home_team_abbr"] = None
-                if values["home_team_abbr"] != team_id:
-                    values["home_team_abbr"] = values["away_team_abbr"]
-                    values["home_team_id"] = values["away_team_id"]
-                    values["home_team_city"] = values["away_team_city"]
-                    values["home_team_name"] = values["away_team_name"]
-                    values["home_team_logo"] = values["away_team_logo"]
-                    values["home_team_colors"] = values["away_team_colors"]
-                    values["home_team_record"] = values["away_team_record"]
+#            if ((arrow.get(values["date"])-arrow.now()).total_seconds() < 172800):
+#                _LOGGER.debug("Next event for %s is 2 or more days ago, so this is likely a post-season scenario.", team_id) 
+#                values["state"] = 'no_game'
+#                values["detailed_state"] = 'STATUS_NO_GAME'
+#                values["date"] = None
+#                values["event_name"] = None
+#                values["event_short_name"] = None
+#                values["event_type"] = None
+#                values["game_notes"] = None
+#                values["venue_name"] = None
+#                values["venue_city"] = None
+#                values["venue_state"] = None
+#                values["venue_capacity"] = None
+#                values["venue_indoor"] = None
+#                values["home_team_abbr"] = None
+#                if values["home_team_abbr"] != team_id:
+#                    values["home_team_abbr"] = values["away_team_abbr"]
+#                    values["home_team_id"] = values["away_team_id"]
+#                    values["home_team_city"] = values["away_team_city"]
+#                    values["home_team_name"] = values["away_team_name"]
+#                    values["home_team_logo"] = values["away_team_logo"]
+#                    values["home_team_colors"] = values["away_team_colors"]
+#                    values["home_team_record"] = values["away_team_record"]
                 
-                values["away_team_abbr"] = None
-                values["away_team_id"] = None
-                values["away_team_city"] = None
-                values["away_team_name"] = None
-                values["away_team_logo"] = None
-                values["away_team_colors"] = None
-                values["away_team_record"] = None
+#                values["away_team_abbr"] = None
+#                values["away_team_id"] = None
+#                values["away_team_city"] = None
+#                values["away_team_name"] = None
+#                values["away_team_logo"] = None
+#                values["away_team_colors"] = None
+#                values["away_team_record"] = None
                 
-                values["tv_network"] = None
-                values["headlines"] = None
-                values["win_or_loss"] = None
+#                values["tv_network"] = None
+#                values["headlines"] = None
 
-        if values["state"] == 'STATUS_SCHEDULED' and ((arrow.get(values["date"])-arrow.now()).total_seconds() < 1200):
+        if values["state"] == 'pre' and ((arrow.get(values["date"])-arrow.now()).total_seconds() < 1200):
             _LOGGER.debug("Event for %s is within 20 minutes, setting refresh rate to 5 seconds." % (team_id))
             values["private_fast_refresh"] = True
-        elif values["state"] == 'STATUS_IN_PROGRESS':
+        elif values["state"] == 'in':
             _LOGGER.debug("Event for %s is in progress, setting refresh rate to 5 seconds." % (team_id))
             values["private_fast_refresh"] = True
-        elif values["state"] in ['STATUS_FINAL', 'OFF']: 
+        elif values["state"] in ['post', 'off']: 
             _LOGGER.debug("Event for %s is over, setting refresh back to 10 minutes." % (team_id))
             values["private_fast_refresh"] = False
         else:
@@ -1118,8 +1115,8 @@ async def async_clear_states(config) -> dict:
         "overunder": None,
         "home_team_odds_win_pct": None,
         "away_team_odds_win_pct": None,
-        "headlines": None,
         "win_or_loss": None,
+        "headlines": None,
         "last_update": None,
         "team_id": None,
         "private_fast_refresh": False
