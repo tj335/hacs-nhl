@@ -287,7 +287,7 @@ async def async_get_state(config) -> dict:
 
                 # featuredAthletes could be: winningGoalie, losingGoalie, firstStar, secondStar, thirdStar
 
-                if values["state"] in ['post']:
+                if values["state"] in ['STATUS_FINAL']:
                     try:
                         featuredAthlete_0_Type = event["competitions"][0]["status"]["featuredAthletes"][0]["name"]
                     except:
@@ -755,11 +755,11 @@ async def async_get_state(config) -> dict:
             except:
                 values["state"] = None
                 
-#            if values["state"] in ['post']:
-#                _LOGGER.info("Game State is POST")
+#            if values["state"] in ['STATUS_FINAL']:
+#                _LOGGER.info("Game State is STATUS_FINAL")
 #                if team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["description"] == "Postponed":
 #                    _LOGGER.info("Game is Postponed, set state")
-#                    values["state"] = "POSTPONED"
+#                    values["state"] = "STATUS_POSTPONED"
             try:
                 values["detailed_state"] = team_data["nextEvent"][0]["competitions"][0]["status"]["type"]["name"]
             except:
@@ -769,6 +769,8 @@ async def async_get_state(config) -> dict:
                 values["date"] = team_data["nextEvent"][0]["date"]
             except:
                 values["date"] = None
+
+            values["last_update"] = arrow.now().format(arrow.FORMAT_W3C)
 
             values["attendance"] = None
             
