@@ -78,6 +78,7 @@ The attributes available will change based on the sensor's state, a small number
 | `overunder` | The over/under betting line for the total points scored in the game (eg. "42.5"). | `PRE` |
 | `home_team_odds_win_pct` | The pre-game chance the home team has to win, according to ESPN.  A percentage, but presented as a float. | `IN` |
 | `away_team_odds_win_pct` | The pre-game chance the away team has to win, according to ESPN.  A percentage, but presented as a float. | `IN` |
+| `win_or_loss` | Set to "win" if your team won, "loss" if your team lost, or "tie". | `POST` |
 | `headlines` | A one sentence headline provided by ESPN. | `PRE` `IN` `POST` |
 | `last_update` | A timestamp for the last time data was fetched for the game. If you watch this in real-time, you should notice it updating every 10 minutes, except for during the game (and for the ~20 minutes pre-game) when it updates every 5 seconds. | `PRE` `IN` `POST` |
 
