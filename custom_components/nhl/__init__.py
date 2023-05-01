@@ -692,13 +692,17 @@ async def async_get_state(config) -> dict:
                         if values["home_team_abbr"] == team_id:
                             if values["home_team_goals"] > values["away_team_goals"]:
                                 values["win_or_loss"] = "win"
-                            else:
+                            elif values["home_team_goals"] < values["away_team_goals"]:
                                 values["win_or_loss"] = "loss"
+                            else:
+                                values["win_or_loss"] = "tie"
                         else:
                             if values["home_team_goals"] > values["away_team_goals"]:
                                 values["win_or_loss"] = "loss"
-                            else:
+                            elif values["home_team_goals"] < values["away_team_goals"]:
                                 values["win_or_loss"] = "win"
+                            else:
+                                values["win_or_loss"] = "tie"
                     else:
                         values["win_or_loss"] = None
                 except:
